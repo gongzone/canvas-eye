@@ -36,7 +36,7 @@ class Point {
         this.y = y;
         this.fixedY = y;
         this.cur = index;
-        this.speed = 0.1;
+        this.speed = 0.01;
         this.max = Math.random() * 100 ;
     }
 
@@ -96,9 +96,10 @@ class Wave {
             const cy = (prevY + this.points[i].y) /2;
 
             ctx.quadraticCurveTo(prevX, prevY, cx, cy);
-
+        
             prevX = this.points[i].x;
             prevY = this.points[i].y;
+           
         }
         ctx.lineTo(prevX,prevY);
         ctx.lineTo(this.stageWidth, this.stageHeight);
