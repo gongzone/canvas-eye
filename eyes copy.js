@@ -1,5 +1,5 @@
 import { EyeStructure } from './eyeStructure copy.js';
-
+import { EyeBall } from './eyeBall.js';
 
 export class Eyes {
     constructor(canvas, ctx) {
@@ -21,6 +21,7 @@ export class Eyes {
     init() {
         this.lefteye = new EyeStructure(this.stageWidth, this.stageHeight, 0.35, false);
         this.righteye = new EyeStructure(this.stageWidth, this.stageHeight, 0.35, true);
+        this.eyeBall = new EyeBall(this.lefteye.quadX, this.lefteye.y, this.righteye.quadX, this.righteye.y, this.ctx)
         }
 
     draw(ctx, eye) {
@@ -37,27 +38,6 @@ export class Eyes {
         ctx.fillStyle = 'white';
         ctx.fill();
         ctx.closePath();
-        
-        this.ctx.beginPath();
-        this.ctx.arc(eye.quadX, eye.y, 45 , 0, 2 * Math.PI);
-        this.ctx.fillStyle = '#77C66E';
-        this.ctx.fill();
-        this.ctx.lineWidth = 1.5;
-        this.ctx.strokeStyle = '#d6d4e0'
-        this.ctx.stroke();
-        this.ctx.closePath();
-    
-        this.ctx.beginPath();
-        this.ctx.arc(eye.quadX, eye.y, 23.34 , 0, 2 * Math.PI);
-        this.ctx.fillStyle = 'black';
-        this.ctx.fill();
-        this.ctx.closePath();
-    
-        this.ctx.beginPath();
-        this.ctx.arc(eye.quadX + 10, eye.y - 7, 8.34 , 0, 2 * Math.PI);
-        this.ctx.fillStyle = 'white';
-        this.ctx.fill();
-        this.ctx.closePath();
         
         ctx.beginPath();
         ctx.moveTo(eye.leftX, eye.y);
@@ -88,6 +68,7 @@ export class Eyes {
         this.draw(this.ctx, this.lefteye);
         this.draw(this.ctx, this.righteye);
         this.eyeBlink();
+        this.eyeBall.update(this.lefteye.quadX, this.lefteye.y, this.righteye.quadX, this.righteye.y);
     }
 
     eyeBlink() {
