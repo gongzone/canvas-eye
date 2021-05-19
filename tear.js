@@ -67,10 +67,18 @@ export class Wave {
     initPoint2() {
         this.points2 = [];
 
-        for(let i = 0; i < this.totalPoints; i++) {
+        for(let i = 0; i < this.totalPoints / 2; i++) {
             this.points2.push(new Point(
                 this.pointGap2 * i + this.righteye.leftX,
-                this.waveY2 ,
+                this.waveY2  + (i * 12),
+                this.index + i,
+                ));
+        }
+
+        for(let i = 5; i < this.totalPoints; i++) {
+            this.points2.push(new Point(
+                this.pointGap2 * i + this.righteye.leftX,
+                (this.waveY2 + 48) - (i-5) * 12,
                 this.index + i,
                 ));
         }
@@ -82,7 +90,6 @@ export class Wave {
 
         let prevX = this.points1[0].x;
         let prevY = this.points1[0].y;
-        console.log(this.points1[0].x)
 
         ctx.moveTo(prevX, prevY);
         
@@ -112,7 +119,6 @@ export class Wave {
 
         let prevX = this.points2[0].x;
         let prevY = this.points2[0].y;
-        console.log(this.points2[0].x)
 
         ctx.moveTo(prevX, prevY);
         
