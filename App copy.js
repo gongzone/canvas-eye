@@ -1,5 +1,6 @@
 import { Eyes } from './eyes copy.js';
 import { Wave } from './tear.js';
+import { TearDrop } from './tearDrop.js';
 
 class App {
     constructor() {
@@ -9,6 +10,7 @@ class App {
         
         this.eyes = new Eyes(this.canvas, this.ctx);
         this.wave = new Wave();
+        this.tearDrop = new TearDrop();
         
         window.addEventListener('resize', this.resize.bind(this), false); //callback 함수로 어떤 객체의 메서드를 전달하게 되면, 더 이상 그 객체의 정보는 남아있지 않게됨, this를 APP 객체가 아닌 window 같은 전역 객체로 인식하는 것을 방지하기 위해 bind를 사용
         this.resize();
@@ -26,7 +28,8 @@ class App {
         this.ctx.scale(2, 2); //무언가 그릴때 두배의 크기로 그리게함.\
 
         this.eyes.resize(this.stageWidth, this.stageHeight);
-        this.wave.resize(this.stageWidth, this.stageHeight)
+        this.wave.resize(this.stageWidth, this.stageHeight);
+        this.tearDrop.resize(this.stageWidth, this.stageHeight);
     }
 
     animate() {
@@ -36,6 +39,7 @@ class App {
         this.eyes.update();
         this.wave.draw1(this.ctx);
         this.wave.draw2(this.ctx);
+        this.tearDrop.draw(this.ctx);
 
     }
     
