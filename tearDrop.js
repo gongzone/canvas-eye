@@ -30,9 +30,9 @@ export class TearDrop {
 
         this.teard();
     }
-    draw(ctx) {
-        for(let i = 0; i < this.totalPoints; i++){
-            this.particles[i].update();
+    draw(ctx, i) {
+
+        this.particles[i].update();
         const x = this.particles[i].x;
         const y = this.particles[i].y;
         const radius = 5;
@@ -42,7 +42,7 @@ export class TearDrop {
         ctx.arc(x, y, radius, 0, Math.PI * 2);
         ctx.fill();
         ctx.closePath();
-        }
+        
     }
     teard() {
         this.particles = [];

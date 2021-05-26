@@ -8,6 +8,8 @@ class App {
         this.ctx = this.canvas.getContext('2d');
         document.body.appendChild(this.canvas);
         
+        this.ticker = 0;
+        this.i = Math.round(Math.random() * 3);
         this.eyes = new Eyes(this.canvas, this.ctx);
         this.wave = new Wave();
         this.tearDrop = new TearDrop();
@@ -17,6 +19,7 @@ class App {
         
         this.onClick();
         requestAnimationFrame(this.animate.bind(this));
+        
     }
 
     resize() {
@@ -39,9 +42,13 @@ class App {
         this.eyes.update();
         this.wave.draw1(this.ctx);
         this.wave.draw2(this.ctx);
-        this.tearDrop.draw(this.ctx);
-
-    }
+        
+        this.ticker++;
+        if(this.ticker % 100 === 0){
+        this.i = Math.round(Math.random() * 3);
+     }
+     this.tearDrop.draw(this.ctx, this.i);
+        }
     
     onClick() {
         this.canvas.addEventListener('click', (event) => {
