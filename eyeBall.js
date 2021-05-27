@@ -70,7 +70,7 @@ export class EyeBall {
         const xRange2 = this.x2 - eyex2;
         const yRange2 = this.y2 - eyey2;
 
-        if((Math.sqrt(xRange**2 + yRange**2) > 7) && (Math.sqrt(xRange2**2 + yRange2**2) > 7) ) {
+        if((Math.sqrt(xRange**2 + yRange**2) > 20) && (Math.sqrt(xRange2**2 + yRange2**2) > 20) ) {
             if(this.i >= 8) {
                 this.i = this.i - 8;
             } else if(this.i < 8) {
@@ -96,8 +96,8 @@ export class EyeBall {
 
             this.velocityArray.push(
                 {
-                    x: Math.cos(radian * i) /20,
-                    y: Math.sin(radian * i) /20,
+                    x: Math.cos(radian * i) / 10 ,
+                    y: Math.sin(radian * i)  /10 ,
                 }
             )
 
