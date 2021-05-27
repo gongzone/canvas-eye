@@ -1,5 +1,6 @@
 import { Eyes } from './eyes copy.js';
 import { Wave } from './tear.js';
+import { EyeStructure } from './eyeStructure copy.js';
 import { TearDrop } from './tearDrop.js';
 
 class App {
@@ -9,10 +10,9 @@ class App {
         document.body.appendChild(this.canvas);
         
         this.ticker = 0;
-        this.i = Math.round(Math.random() * 3);
+        this.teardrops = [];
         this.eyes = new Eyes(this.canvas, this.ctx);
         this.wave = new Wave();
-        this.tearDrop = new TearDrop();
         
         window.addEventListener('resize', this.resize.bind(this), false); //callback 함수로 어떤 객체의 메서드를 전달하게 되면, 더 이상 그 객체의 정보는 남아있지 않게됨, this를 APP 객체가 아닌 window 같은 전역 객체로 인식하는 것을 방지하기 위해 bind를 사용
         this.resize();
@@ -32,22 +32,44 @@ class App {
 
         this.eyes.resize(this.stageWidth, this.stageHeight);
         this.wave.resize(this.stageWidth, this.stageHeight);
-        this.tearDrop.resize(this.stageWidth, this.stageHeight);
+        this.init();
+    }
+    init() {
+        this.lefteye = new EyeStructure(this.stageWidth, this.stageHeight, 0.35, false);
+        this.righteye = new EyeStructure(this.stageWidth, this.stageHeight, 0.35, true);
     }
 
     animate() {
         this.animateId = requestAnimationFrame(this.animate.bind(this));
-        this.ctx.clearRect(0, 0, this.stageWidth, this.stageHeight);
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+        this.ctx.fillRect(0, 0, this.stageWidth, this.stageHeight);
 
         this.eyes.update();
         this.wave.draw1(this.ctx);
         this.wave.draw2(this.ctx);
+        this.teardrops.forEach(teardrops => {
+            teardrops.update();
+        })
         
         this.ticker++;
-        if(this.ticker % 100 === 0){
-        this.i = Math.round(Math.random() * 3);
-     }
-     this.tearDrop.draw(this.ctx, this.i);
+        if(this.ticker % 40 === 0){
+            let x = (this.lefteye.rightX - this.lefteye.leftX) * Math.random() + this.lefteye.leftX;
+            let t = (x - this.lefteye.leftX) / 225 ;
+
+            if(t <= 0.1) {
+                x += 20;
+                t = (x - this.lefteye.leftX) / 225 ;
+            }
+            if(t >= 0.9) {
+               
+                x -= 20;
+                t = (x - this.lefteye.leftX) / 225 ;
+            }
+          
+            const y =  (1-t)**2 * this.lefteye.y + 2 * (1-t) * t * this.lefteye.quadBotY + t**2 * this.lefteye.y;
+
+            this.teardrops.push(new TearDrop(x, y, 0.1, this.ctx));
+        }
         }
     
     onClick() {

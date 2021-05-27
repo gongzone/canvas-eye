@@ -70,7 +70,7 @@ export class EyeBall {
         const xRange2 = this.x2 - eyex2;
         const yRange2 = this.y2 - eyey2;
 
-        if((Math.sqrt(xRange**2 + yRange**2) > 8) && (Math.sqrt(xRange2**2 + yRange2**2) > 8) ) {
+        if((Math.sqrt(xRange**2 + yRange**2) > 7) && (Math.sqrt(xRange2**2 + yRange2**2) > 7) ) {
             if(this.i >= 8) {
                 this.i = this.i - 8;
             } else if(this.i < 8) {

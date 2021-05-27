@@ -6,8 +6,8 @@ class Point {
         this.y = y;
         this.fixedY = y;
         this.sinX = index;
-        this.velocity = 0.01;
-        this.max = Math.random() * 8;
+        this.velocity = 0.03;
+        this.max = Math.random() * 6;
     }
     update() {
         this.sinX += this.velocity;
