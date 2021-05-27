@@ -81,7 +81,7 @@ export class EyeBall {
         }
         
         this.drawL();
-        this.x += this.velocityArray[this.i].x  ;
+        this.x += this.velocityArray[this.i].x ;  
         this.y += this.velocityArray[this.i].y ;
 
         this.drawR();
@@ -96,8 +96,8 @@ export class EyeBall {
 
             this.velocityArray.push(
                 {
-                    x: Math.cos(radian * i) /30,
-                    y: Math.sin(radian * i) /30,
+                    x: Math.cos(radian * i) /20,
+                    y: Math.sin(radian * i) /20,
                 }
             )
 

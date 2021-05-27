@@ -23,7 +23,7 @@ export class TearDrop {
             this.radius += 0.05;
         } 
 
-        if(this.radius >= 7) {
+        if(this.radius >= 6.5) {
             this.y += this.velocity;
             this.velocity += 0.15;
         }
