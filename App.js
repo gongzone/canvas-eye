@@ -1,47 +1,213 @@
-import { Eyes } from './eyes.js';
 
-class App {
-    constructor() {
-        this.canvas = document.createElement('canvas');
-        this.ctx = this.canvas.getContext('2d');
-        document.body.appendChild(this.canvas);
-        
-        this.eyes = new Eyes(this.canvas, this.ctx);
-        
-        window.addEventListener('resize', this.resize.bind(this), false); //callback 함수로 어떤 객체의 메서드를 전달하게 되면, 더 이상 그 객체의 정보는 남아있지 않게됨, this를 APP 객체가 아닌 window 같은 전역 객체로 인식하는 것을 방지하기 위해 bind를 사용
-        this.resize();
-        
-        this.onClick();
-        requestAnimationFrame(this.animate.bind(this));
-    }
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d');
+document.body.appendChild(canvas);
 
-    resize() {
-        this.stageWidth = document.body.clientWidth;
-        this.stageHeight = document.body.clientHeight;
-        //캔버스 크기를 두배로 만들어서 고품질 화면 표현(CSS는 100%) =>화면압축
-        this.canvas.width = this.stageWidth * 2;
-        this.canvas.height = this.stageHeight * 2;
-        this.ctx.scale(2, 2); //무언가 그릴때 두배의 크기로 그리게함.\
+canvas.width = document.body.clientWidth;
+canvas.height = document.body.clientHeight;
 
-        this.eyes.resize(this.stageWidth, this.stageHeight);
-    }
-
-    animate() {
-        this.animateId = requestAnimationFrame(this.animate.bind(this));
-        this.ctx.clearRect(0, 0, this.stageWidth, this.stageHeight);
-
-        this.eyes.update();
-    }
+addEventListener('resize', () => {
+    canvas.width = document.body.clientWidth;
+    canvas.height = document.body.clientHeight;
     
-    onClick() {
-        this.canvas.addEventListener('click', (event) => {
-        cancelAnimationFrame(this.animateId);
-        this.eyes.getCount(event);
-        this.animate();
+    init();
+    eyes.onClick(leftEye);
+    eyes.onClick(rightEye);
+});
+
+class EyeStructure {
+    constructor(canvasWidth, canvasHeight, isRightEye) {
+        const widthCenter = canvasWidth / 2;
+
+        this.leftX = widthCenter - 240;
+        this.rightX = this.leftX + 225;
+        this.y = canvasHeight * 0.35;
+
+        if(isRightEye) {
+            this.leftX = widthCenter + 15;
+            this.rightX = this.leftX + 225;
+        }
+
+        this.quadX = (this.leftX + this.rightX) / 2;
+        this.quadTopY = this.y - 112.5;
+        this.quadBotY = this.y + 112.5;
+
+        this.cubicLeftX = this.leftX + 45;
+        this.cubicRightX = this.rightX - 45;
+        this.cubicTopY = this.y - 90;
+        this.cubicBotY = this.y + 90;
+
+        this.count = 0;
+        this.velocity = 0.03;
+        this.wavePoints = [];
+        this.blinkPoint = this.quadTopY;
+    }
+    getMousePos(event) {
+        this.mouseX = event.clientX - this.leftX;
+        this.mouseY = event.clientY;
+    }
+    getYrange() {
+        this.t = this.mouseX / 225;
+        this.yTop = (1-this.t)**3 * this.y + 3 * (1-this.t)**2 * this.t * this.cubicTopY + 3*(1-this.t) * this.t**2 * this.cubicTopY + this.t**3 * this.y;
+        this.yBottom = (1-this.t)**3 * this.y + 3 * (1-this.t)**2 * this.t * this.cubicBotY + 3*(1-this.t) * this.t**2 * this.cubicBotY + this.t**3 * this.y;
+    }
+}
+
+class Eyes {
+    constructor() {
+
+    }
+    draw(eye) {
+        const gradient = ctx.createLinearGradient(eye.quadX, eye.cubicTopY + 10, eye.quadX, eye.cubicTopY + 110);
+        gradient.addColorStop(0, '#FFDBAC');
+        gradient.addColorStop(0.3, '#F1C27D');
+        gradient.addColorStop(0.7, '#E0AC69');
+        gradient.addColorStop(1, '#C68642');
+
+        ctx.beginPath();
+        ctx.moveTo(eye.leftX, eye.y);
+        ctx.quadraticCurveTo(eye.quadX, eye.quadTopY, eye.rightX, eye.y);
+        ctx.quadraticCurveTo(eye.quadX, eye.quadBotY, eye.leftX, eye.y);
+        ctx.fillStyle = 'white';
+        ctx.fill();
+        ctx.closePath();
+        
+        ctx.beginPath();
+        ctx.arc(eye.quadX, eye.y, 45 , 0, 2 * Math.PI);
+        ctx.fillStyle = '#77C66E';
+        ctx.fill();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = '#d6d4e0'
+        ctx.stroke();
+        ctx.closePath();
+    
+        ctx.beginPath();
+        ctx.arc(eye.quadX, eye.y, 23.34 , 0, 2 * Math.PI);
+        ctx.fillStyle = 'black';
+        ctx.fill();
+        ctx.closePath();
+    
+        ctx.beginPath();
+        ctx.arc(eye.quadX + 10, eye.y - 7, 8.34 , 0, 2 * Math.PI);
+        ctx.fillStyle = 'white';
+        ctx.fill();
+        ctx.closePath();
+        
+        ctx.beginPath();
+        ctx.moveTo(eye.leftX, eye.y);
+        ctx.bezierCurveTo(eye.cubicLeftX, eye.cubicBotY, eye.cubicRightX, eye.cubicBotY, eye.rightX, eye.y);
+        ctx.quadraticCurveTo(eye.quadX, eye.quadBotY, eye.leftX, eye.y);
+        ctx.fillStyle = '#F1C27D';
+        ctx.fill();
+        ctx.lineWidth = 0.5;
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = '#d6d4e0'
+        ctx.stroke();
+        ctx.closePath();
+
+        ctx.beginPath();
+        ctx.moveTo(eye.leftX, eye.y);
+        ctx.bezierCurveTo(eye.cubicLeftX, eye.cubicTopY, eye.cubicRightX, eye.cubicTopY, eye.rightX, eye.y);
+        ctx.quadraticCurveTo(eye.quadX, eye.blinkPoint, eye.leftX, eye.y);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+        ctx.lineWidth = 0.5;
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = '#d6d4e0'
+        ctx.stroke();
+        ctx.closePath();
+    }
+    update() {
+        this.draw(leftEye);
+        this.blink(leftEye);
+
+        this.draw(rightEye);
+        this.blink(rightEye);
+    }
+
+    blink(eye) {
+        const acceleration = 0.05;
+
+        if ((eye.blinkPoint < eye.quadBotY - 3) && (eye.count % 2 === 1)) {
+            eye.blinkPoint += eye.velocity;
+            eye.velocity += acceleration; 
+        } else if ((eye.blinkPoint > eye.quadTopY + 4) && (eye.count % 2 === 0)) {
+            eye.blinkPoint -= eye.velocity;
+            eye.velocity += acceleration;
+        }
+    }
+    onClick(eye) {
+        canvas.addEventListener('click', (event) => { 
+            eye.getMousePos(event);
+            eye.getYrange();
+            
+            if((0 <= eye.mouseX && eye.mouseX <= 225) && (eye.yTop <= eye.mouseY && eye.mouseY <= eye.yBottom)) {
+                eye.count++;
+                eye.velocity = 0.03;
+                console.log(eye.count);
+                console.log(eye.velocity);
+                console.log(eye.mouseX);
+                console.log(eye.mouseY);
+                console.log(eye.yTop);
+                console.log(eye.yBottom);
+            }
+            
         })
     }
 }
 
+class WavePoint {
+    constructor(x, y, radian, velocity) {
+        this.x = x;
+        this.y = y;
+        this.radian = radian;
+        this.velocity  = velocity;
+        this.yRange = Math.random() * 6; 
+    }
+    update() {
+        this.radian += this.velocity;
+        this.y += Math.sin(this.radian) * this.yRange;
+    }
+}
+
+class TearWave {
+    constructor() {
+        this.totalPoints = 10;
+    }
+}
+
+let leftEye;
+let rightEye;
+let eyes = new Eyes();
+
+function init() {
+    leftEye = new EyeStructure(canvas.width, canvas.height, false);
+    rightEye = new EyeStructure(canvas.width, canvas.height, true);
+
+    const totalPoints = 10;
+    const xGap = (leftEye.rightX - leftEye.leftX) / (totalPoints - 1);
+
+    for (let i = 0; i < totalPoints; i++) {
+        const x = xGap * i + leftEye.leftX;
+        const y = i < 5 ? leftEye.y + (i * 12) : 
+        leftEye.wavePoints.push(new WavePoint(x,y, ))
+
+    }
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    eyes.update();
+}
+
 window.onload = () => {
-    new App();
-};
+    init();
+    eyes.onClick(leftEye);
+    eyes.onClick(rightEye);
+    animate();
+}
+
+
