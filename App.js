@@ -160,47 +160,88 @@ class WavePoint {
     constructor(x, y, radian, velocity) {
         this.x = x;
         this.y = y;
+        this.fixedY = y;
         this.radian = radian;
         this.velocity  = velocity;
         this.yRange = Math.random() * 6; 
     }
     update() {
         this.radian += this.velocity;
-        this.y += Math.sin(this.radian) * this.yRange;
+        this.y = this.fixedY + (Math.sin(this.radian) * this.yRange);
     }
 }
 
 class TearWave {
     constructor() {
-        this.totalPoints = 10;
+
     }
+    draw(eye) {
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(35, 137, 218, 0.4)';
+
+        let prevX = eye.wavePoints[0].x;
+        let prevY = eye.wavePoints[0].y;
+
+        ctx.moveTo(prevX, prevY);
+        
+        for(let i = 1; i < totalPoints; i++) {
+            if(i < totalPoints - 1 ) {
+                eye.wavePoints[i].update();
+            }
+
+            const centerX = (prevX + eye.wavePoints[i].x) / 2;
+            const centerY = (prevY + eye.wavePoints[i].y) / 2;
+
+            ctx.quadraticCurveTo(prevX, prevY, centerX, centerY);
+
+            prevX = eye.wavePoints[i].x;
+            prevY = eye.wavePoints[i].y;
+        }
+
+        ctx.lineTo(prevX, prevY);
+        ctx.quadraticCurveTo(eye.quadX, eye.quadBotY , eye.leftX, eye.y);
+        ctx.fill();
+        ctx.closePath();
+}
 }
 
 let leftEye;
 let rightEye;
+let totalPoints;
 let eyes = new Eyes();
+let tearWave = new TearWave();
 
 function init() {
     leftEye = new EyeStructure(canvas.width, canvas.height, false);
     rightEye = new EyeStructure(canvas.width, canvas.height, true);
 
-    const totalPoints = 10;
+    totalPoints = 10;
+    const vertex = leftEye.quadBotY - 50;
     const xGap = (leftEye.rightX - leftEye.leftX) / (totalPoints - 1);
+    const yGap = (vertex - leftEye.y ) / Math.floor(totalPoints / 2);
+    const velocity = 0.03;
 
     for (let i = 0; i < totalPoints; i++) {
         const x = xGap * i + leftEye.leftX;
-        const y = i < 5 ? leftEye.y + (i * 12) : 
-        leftEye.wavePoints.push(new WavePoint(x,y, ))
+        const y = i < totalPoints / 2 ? leftEye.y + (i * yGap) : vertex - ((i - Math.floor((totalPoints - 1) / 2)) * yGap);
+        leftEye.wavePoints.push(new WavePoint(x, y, Math.PI / 4 * i, velocity))
+    }
 
+    for (let i = 0; i < totalPoints; i++) {
+        const x = xGap * i + rightEye.leftX;
+        const y = i < totalPoints / 2 ? leftEye.y + (i * yGap) : vertex - ((i - Math.floor((totalPoints - 1) / 2)) * yGap);
+        rightEye.wavePoints.push(new WavePoint(x, y, Math.PI / 4 * i, velocity))
     }
 }
 
 function animate() {
     requestAnimationFrame(animate);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)'; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     eyes.update();
+    tearWave.draw(leftEye);
+    tearWave.draw(rightEye);
 }
 
 window.onload = () => {
