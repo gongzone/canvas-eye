@@ -61,12 +61,11 @@ class App {
                 t = (x - this.lefteye.leftX) / 225 ;
             }
             if(t >= 0.9) {
-            
                 x -= 20;
                 t = (x - this.lefteye.leftX) / 225 ;
             }
             
-            const y =  (1-t)**2 * this.lefteye.y + 2 * (1-t) * t * this.lefteye.quadBotY + t**2 * this.lefteye.y;
+            const y = (1-t)**2 * this.lefteye.y + 2 * (1-t) * t * this.lefteye.quadBotY + t**2 * this.lefteye.y;
 
             this.teardrops.push(new TearDrop(x, y, 0.1, this.ctx));
         }

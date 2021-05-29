@@ -40,6 +40,7 @@ class EyeStructure {
         this.count = 0;
         this.velocity = 0.03;
         this.wavePoints = [];
+        this.tearDrops = [];
         this.blinkPoint = this.quadTopY;
     }
     getMousePos(event) {
@@ -71,7 +72,7 @@ class Eyes {
         ctx.fillStyle = 'white';
         ctx.fill();
         ctx.closePath();
-        
+
         ctx.beginPath();
         ctx.arc(eye.quadX, eye.y, 45 , 0, 2 * Math.PI);
         ctx.fillStyle = '#77C66E';
@@ -163,7 +164,7 @@ class WavePoint {
         this.fixedY = y;
         this.radian = radian;
         this.velocity  = velocity;
-        this.yRange = Math.random() * 6; 
+        this.yRange = Math.random() * 7; 
     }
     update() {
         this.radian += this.velocity;
@@ -171,9 +172,55 @@ class WavePoint {
     }
 }
 
+class TearDrop {
+    constructor(x, y, velocity) {
+        this.x = x;
+        this.y = y;
+        this.velocity = velocity;
+        this.radius = 0;
+
+        this.ttl = 500;
+        this.maxRadius = getRandomInt(2, 5);
+    }
+    draw() {
+        ctx.beginPath();
+        ctx.fillStyle = '#a7d0f0';
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.closePath();
+    }
+    update() {
+        this.draw();
+
+        if(this.radius <= this.maxRadius) {
+            this.radius += 0.02;
+        } else if(this.radius >= this.maxRadius) {
+            const gravity = 0.15;
+            this.y += this.velocity;
+            this.velocity += gravity;
+        }
+
+        this.ttl -= 1;
+    }
+}
+
 class TearWave {
     constructor() {
+        this.totalPoints = 10;
+        this.velocity = 0.03;
 
+        this.timer = 0;
+    }
+    init(eye) {
+        const vertex = eye.quadBotY - 50;
+        const xGap = (eye.rightX - eye.leftX) / (this.totalPoints - 1);
+        const yGap = (vertex - eye.y ) / Math.floor(this.totalPoints / 2);
+    
+        for (let i = 0; i < this.totalPoints; i++) {
+            const x = xGap * i + eye.leftX;
+            const y = i < this.totalPoints / 2 ? eye.y + (i * yGap) : vertex - ((i - Math.floor((this.totalPoints - 1) / 2)) * yGap);
+            eye.wavePoints.push(new WavePoint(x, y, i, this.velocity))
+        }
     }
     draw(eye) {
         ctx.beginPath();
@@ -184,8 +231,8 @@ class TearWave {
 
         ctx.moveTo(prevX, prevY);
         
-        for(let i = 1; i < totalPoints; i++) {
-            if(i < totalPoints - 1 ) {
+        for(let i = 1; i < this.totalPoints; i++) {
+            if(i < this.totalPoints - 1 ) {
                 eye.wavePoints[i].update();
             }
 
@@ -202,46 +249,79 @@ class TearWave {
         ctx.quadraticCurveTo(eye.quadX, eye.quadBotY , eye.leftX, eye.y);
         ctx.fill();
         ctx.closePath();
-}
+    }
+    update() {
+        this.draw(leftEye);
+        this.draw(rightEye);
+    }
 }
 
 let leftEye;
 let rightEye;
-let totalPoints;
 let eyes = new Eyes();
 let tearWave = new TearWave();
+let timer = 0;
 
 function init() {
     leftEye = new EyeStructure(canvas.width, canvas.height, false);
     rightEye = new EyeStructure(canvas.width, canvas.height, true);
 
-    totalPoints = 10;
-    const vertex = leftEye.quadBotY - 50;
-    const xGap = (leftEye.rightX - leftEye.leftX) / (totalPoints - 1);
-    const yGap = (vertex - leftEye.y ) / Math.floor(totalPoints / 2);
-    const velocity = 0.03;
+    tearWave.init(leftEye);
+    tearWave.init(rightEye);
+}
 
-    for (let i = 0; i < totalPoints; i++) {
-        const x = xGap * i + leftEye.leftX;
-        const y = i < totalPoints / 2 ? leftEye.y + (i * yGap) : vertex - ((i - Math.floor((totalPoints - 1) / 2)) * yGap);
-        leftEye.wavePoints.push(new WavePoint(x, y, Math.PI / 4 * i, velocity))
-    }
+function generateTears(eye) {
+    if(timer % 40 === 0){
+        let x = (eye.rightX - eye.leftX) * Math.random() + eye.leftX;
+        let t = (x - eye.leftX) / 225 ;
 
-    for (let i = 0; i < totalPoints; i++) {
-        const x = xGap * i + rightEye.leftX;
-        const y = i < totalPoints / 2 ? leftEye.y + (i * yGap) : vertex - ((i - Math.floor((totalPoints - 1) / 2)) * yGap);
-        rightEye.wavePoints.push(new WavePoint(x, y, Math.PI / 4 * i, velocity))
+        if(t <= 0.1) {
+            x += 20;
+            t = (x - eye.leftX) / 225 ;
+        }
+        if(t >= 0.9) {
+            x -= 20;
+            t = (x - eye.leftX) / 225 ;
+        }
+        
+        const y = (1-t)**2 * eye.y + 2 * (1-t) * t * eye.quadBotY + t**2 * eye.y;
+
+        eye.tearDrops.push(new TearDrop(x, y, 0.1));
     }
+}
+
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
 function animate() {
     requestAnimationFrame(animate);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)'; 
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+    
     eyes.update();
-    tearWave.draw(leftEye);
-    tearWave.draw(rightEye);
+    
+    tearWave.update();
+    
+    leftEye.tearDrops.forEach((tearDrop, index) => {
+        tearDrop.update();
+        if(tearDrop.ttl === 0) {
+            leftEye.tearDrops.splice(index, 1);
+        }
+    });
+
+    rightEye.tearDrops.forEach((tearDrop, index) => {
+        tearDrop.update();
+        if(tearDrop.ttl === 0) {
+            rightEye.tearDrops.splice(index, 1);
+        }
+    });
+
+  
+
+    timer++;
+    generateTears(leftEye);
+    generateTears(rightEye);
 }
 
 window.onload = () => {
