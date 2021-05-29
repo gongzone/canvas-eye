@@ -58,7 +58,7 @@ class Eyes {
     constructor() {
 
     }
-    draw(eye) {
+    drawUpperLid(eye) {
         const gradient = ctx.createLinearGradient(eye.quadX, eye.cubicTopY + 10, eye.quadX, eye.cubicTopY + 110);
         gradient.addColorStop(0, '#FFDBAC');
         gradient.addColorStop(0.3, '#F1C27D');
@@ -67,12 +67,31 @@ class Eyes {
 
         ctx.beginPath();
         ctx.moveTo(eye.leftX, eye.y);
+        ctx.bezierCurveTo(eye.cubicLeftX, eye.cubicTopY, eye.cubicRightX, eye.cubicTopY, eye.rightX, eye.y);
+        ctx.quadraticCurveTo(eye.quadX, eye.blinkPoint, eye.leftX, eye.y);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+        ctx.closePath();
+    }
+    drawLowerLid(eye) {
+        ctx.beginPath();
+        ctx.moveTo(eye.leftX, eye.y);
+        ctx.bezierCurveTo(eye.cubicLeftX, eye.cubicBotY, eye.cubicRightX, eye.cubicBotY, eye.rightX, eye.y);
+        ctx.quadraticCurveTo(eye.quadX, eye.quadBotY, eye.leftX, eye.y);
+        ctx.fillStyle = '#F1C27D';
+        ctx.fill();
+        ctx.closePath();
+    }
+    drawWhite(eye) {
+        ctx.beginPath();
+        ctx.moveTo(eye.leftX, eye.y);
         ctx.quadraticCurveTo(eye.quadX, eye.quadTopY, eye.rightX, eye.y);
         ctx.quadraticCurveTo(eye.quadX, eye.quadBotY, eye.leftX, eye.y);
         ctx.fillStyle = 'white';
         ctx.fill();
         ctx.closePath();
-
+    }
+    drawPupil(eye) {
         ctx.beginPath();
         ctx.arc(eye.quadX, eye.y, 45 , 0, 2 * Math.PI);
         ctx.fillStyle = '#77C66E';
@@ -93,39 +112,14 @@ class Eyes {
         ctx.fillStyle = 'white';
         ctx.fill();
         ctx.closePath();
-        
-        ctx.beginPath();
-        ctx.moveTo(eye.leftX, eye.y);
-        ctx.bezierCurveTo(eye.cubicLeftX, eye.cubicBotY, eye.cubicRightX, eye.cubicBotY, eye.rightX, eye.y);
-        ctx.quadraticCurveTo(eye.quadX, eye.quadBotY, eye.leftX, eye.y);
-        ctx.fillStyle = '#F1C27D';
-        ctx.fill();
-        ctx.lineWidth = 0.5;
-        ctx.lineJoin = 'round';
-        ctx.strokeStyle = '#d6d4e0'
-        ctx.stroke();
-        ctx.closePath();
-
-        ctx.beginPath();
-        ctx.moveTo(eye.leftX, eye.y);
-        ctx.bezierCurveTo(eye.cubicLeftX, eye.cubicTopY, eye.cubicRightX, eye.cubicTopY, eye.rightX, eye.y);
-        ctx.quadraticCurveTo(eye.quadX, eye.blinkPoint, eye.leftX, eye.y);
-        ctx.fillStyle = gradient;
-        ctx.fill();
-        ctx.lineWidth = 0.5;
-        ctx.lineJoin = 'round';
-        ctx.strokeStyle = '#d6d4e0'
-        ctx.stroke();
-        ctx.closePath();
     }
     update() {
-        this.draw(leftEye);
+        this.drawUpperLid(leftEye);
         this.blink(leftEye);
 
-        this.draw(rightEye);
+        this.drawUpperLid(rightEye);
         this.blink(rightEye);
     }
-
     blink(eye) {
         const acceleration = 0.05;
 
@@ -164,7 +158,7 @@ class WavePoint {
         this.fixedY = y;
         this.radian = radian;
         this.velocity  = velocity;
-        this.yRange = Math.random() * 7; 
+        this.yRange = Math.random() * 8; 
     }
     update() {
         this.radian += this.velocity;
@@ -223,8 +217,9 @@ class TearWave {
         }
     }
     draw(eye) {
+        
         ctx.beginPath();
-        ctx.fillStyle = 'rgba(35, 137, 218, 0.4)';
+        ctx.fillStyle = '#a7d0f0';
 
         let prevX = eye.wavePoints[0].x;
         let prevY = eye.wavePoints[0].y;
@@ -246,7 +241,7 @@ class TearWave {
         }
 
         ctx.lineTo(prevX, prevY);
-        ctx.quadraticCurveTo(eye.quadX, eye.quadBotY , eye.leftX, eye.y);
+        ctx.quadraticCurveTo(eye.quadX, eye.quadBotY + 3 , eye.leftX, eye.y);
         ctx.fill();
         ctx.closePath();
     }
@@ -299,10 +294,9 @@ function animate() {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    eyes.update();
-    
-    tearWave.update();
-    
+    eyes.drawLowerLid(leftEye);
+    eyes.drawLowerLid(rightEye);
+
     leftEye.tearDrops.forEach((tearDrop, index) => {
         tearDrop.update();
         if(tearDrop.ttl === 0) {
@@ -317,7 +311,15 @@ function animate() {
         }
     });
 
-  
+    eyes.drawWhite(leftEye);
+    eyes.drawWhite(rightEye);
+
+    eyes.drawPupil(leftEye);
+    eyes.drawPupil(rightEye);
+
+    tearWave.update();
+
+    eyes.update();
 
     timer++;
     generateTears(leftEye);
