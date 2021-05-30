@@ -13,6 +13,7 @@ addEventListener('resize', () => {
     init();
     eyes.onClick(leftEye);
     eyes.onClick(rightEye);
+    eyes.onMouseOver(leftEye);
 });
 
 class EyeStructure {
@@ -57,7 +58,12 @@ class EyeStructure {
 
 class Eyes {
     constructor() {
-
+        this.pupilRadius = 45;
+        this.fixedRadius = 45;
+        this.radian = Math.PI;
+        this.velocity  = 0.15;
+        this.speed = 0.1;
+        this.max = 6; 
     }
     drawUpperLid(eye) {
         const gradient = ctx.createLinearGradient(eye.quadX, eye.cubicTopY + 10, eye.quadX, eye.cubicTopY + 110);
@@ -94,7 +100,7 @@ class Eyes {
     }
     drawPupil(eye) {
         ctx.beginPath();
-        ctx.arc(eye.quadX, eye.y, 45 , 0, 2 * Math.PI);
+        ctx.arc(eye.quadX, eye.y, this.pupilRadius , 0, 2 * Math.PI);
         ctx.fillStyle = '#77C66E';
         ctx.fill();
         ctx.lineWidth = 1.5;
@@ -103,13 +109,13 @@ class Eyes {
         ctx.closePath();
     
         ctx.beginPath();
-        ctx.arc(eye.quadX, eye.y, 23.34 , 0, 2 * Math.PI);
+        ctx.arc(eye.quadX, eye.y, this.pupilRadius - 20, 0, 2 * Math.PI);
         ctx.fillStyle = 'black';
         ctx.fill();
         ctx.closePath();
     
         ctx.beginPath();
-        ctx.arc(eye.quadX + 10, eye.y - 7, 8.34 , 0, 2 * Math.PI);
+        ctx.arc(eye.quadX + 10, eye.y - 7, this.pupilRadius - 36, 0, 2 * Math.PI);
         ctx.fillStyle = 'white';
         ctx.fill();
         ctx.closePath();
@@ -117,9 +123,12 @@ class Eyes {
     update() {
         this.drawUpperLid(leftEye);
         this.blink(leftEye);
+        this.fd(leftEye);
 
         this.drawUpperLid(rightEye);
         this.blink(rightEye);
+
+        
     }
     blink(eye) {
         const acceleration = 0.05;
@@ -131,6 +140,32 @@ class Eyes {
             eye.blinkPoint -= eye.velocity;
             eye.velocity += acceleration;
         }
+
+    }
+    fd (eye) {
+        if((0 <= eye.mouseX && eye.mouseX <= 225) && (eye.yTop <= eye.mouseY && eye.mouseY <= eye.yBottom)) {
+            this.changePupilSize();
+            } else {
+                this.pupilRadius = this.fixedRadius;
+            } 
+    }
+    
+    changePupilSize() {
+        this.radian += this.velocity;
+        this.pupilRadius = this.fixedRadius + (Math.sin(this.radian) * this.max);
+
+        this.max -= this.speed;
+        
+        if(this.max <= 0 || this.max >= 6) {
+            this.speed = this.speed * -1;
+        }
+}
+    onMouseOver(eye) {
+        canvas.addEventListener('mousemove', (event) => {
+            eye.getMousePos(event);
+            eye.getYrange();
+        })
+    
     }
     onClick(eye) {
         canvas.addEventListener('click', (event) => { 
@@ -388,6 +423,7 @@ function animate() {
             rightEye.scatteredTears.splice(index, 1);
         }
     })
+    
 }
 
 window.onload = () => {
@@ -395,6 +431,5 @@ window.onload = () => {
     eyes.onClick(leftEye);
     eyes.onClick(rightEye);
     animate();
+    eyes.onMouseOver(leftEye);
 }
-
-
