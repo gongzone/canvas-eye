@@ -41,6 +41,7 @@ class EyeStructure {
         this.velocity = 0.03;
         this.wavePoints = [];
         this.tearDrops = [];
+        this.scatteredTears = [];
         this.blinkPoint = this.quadTopY;
     }
     getMousePos(event) {
@@ -167,18 +168,70 @@ class WavePoint {
 }
 
 class TearDrop {
-    constructor(x, y, velocity) {
+    constructor(x, y, radius, color, velocity) {
         this.x = x;
         this.y = y;
+        this.radius = radius;
+        this.color = color;
         this.velocity = velocity;
-        this.radius = 0;
-
+    
+        this.gravity = 0.15;
         this.ttl = 500;
-        this.maxRadius = getRandomInt(2, 5);
+        this.randomRadius = getRandomInt(2, 5);
     }
     draw() {
         ctx.beginPath();
-        ctx.fillStyle = '#a7d0f0';
+        ctx.fillStyle = this.color;
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.closePath();
+    }
+    update() {
+        this.draw();
+    
+        if(this.radius <= this.randomRadius) {
+            this.radius += 0.02;
+        } else if(this.radius >= this.randomRadius) {
+            this.y += this.velocity.y;
+            this.velocity.y += this.gravity;
+        }
+
+        this.scatter(leftEye);
+        this.scatter(rightEye);
+
+    }
+    scatter(eye) {
+        if(this.y + this.radius >= canvas.height) {
+            for(let i = 0; i < 10; i++) {
+            eye.scatteredTears.push(new ScatteredTears(this.x, this.y, (this.radius - 1) * Math.random()));
+            }
+            eye.tearDrops.forEach((tearDrop, index) => {
+                if(tearDrop.y + this.radius >= canvas.height){
+                eye.tearDrops.splice(index, 1);
+            }})
+        }
+}
+}
+
+class ScatteredTears extends TearDrop {
+    constructor(x, y, radius) {
+        super(x, y, radius);
+        this.velocity = {
+            x: getRandomInt(-4, 4),
+            y: getRandomInt(-5, 5),
+        }
+
+        this.gravity = 0.08;
+        this.randomRadius = Math.random() * this.radius;
+        this.ttl = 100;
+        this.r = 167;
+        this.g = 208;
+        this.b = 240;
+        this.alpha = 1;
+    }
+    draw() {
+        ctx.beginPath();
+        ctx.fillStyle = `rgb(${this.r}, ${this.g}, ${this.b}, ${this.alpha} )`;
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
         ctx.closePath();
@@ -186,16 +239,16 @@ class TearDrop {
     update() {
         this.draw();
 
-        if(this.radius <= this.maxRadius) {
-            this.radius += 0.02;
-        } else if(this.radius >= this.maxRadius) {
-            const gravity = 0.15;
-            this.y += this.velocity;
-            this.velocity += gravity;
-        }
-
+        this.x += this.velocity.x;
+        this.y += this.velocity.y;
+        this.velocity.y += this.gravity;
         this.ttl -= 1;
+        this.r += getRandomInt(-15, 15);
+        this.g += getRandomInt(-15, 15);
+        this.b += getRandomInt(-15, 15);
+        this.alpha -= 1 / this.ttl;
     }
+
 }
 
 class TearWave {
@@ -266,7 +319,7 @@ function init() {
 }
 
 function generateTears(eye) {
-    if(timer % 40 === 0){
+    if(timer % 60 === 0){
         let x = (eye.rightX - eye.leftX) * Math.random() + eye.leftX;
         let t = (x - eye.leftX) / 225 ;
 
@@ -281,7 +334,10 @@ function generateTears(eye) {
         
         const y = (1-t)**2 * eye.y + 2 * (1-t) * t * eye.quadBotY + t**2 * eye.y;
 
-        eye.tearDrops.push(new TearDrop(x, y, 0.1));
+        eye.tearDrops.push(new TearDrop(x, y, 0, '#a7d0f0', {
+            x: 0,
+            y: 0.1,
+        }));
     }
 }
 
@@ -299,16 +355,10 @@ function animate() {
 
     leftEye.tearDrops.forEach((tearDrop, index) => {
         tearDrop.update();
-        if(tearDrop.ttl === 0) {
-            leftEye.tearDrops.splice(index, 1);
-        }
     });
 
     rightEye.tearDrops.forEach((tearDrop, index) => {
         tearDrop.update();
-        if(tearDrop.ttl === 0) {
-            rightEye.tearDrops.splice(index, 1);
-        }
     });
 
     eyes.drawWhite(leftEye);
@@ -324,6 +374,20 @@ function animate() {
     timer++;
     generateTears(leftEye);
     generateTears(rightEye);
+
+    leftEye.scatteredTears.forEach((scatteredTear, index) => {
+        scatteredTear.update();
+        if(scatteredTear.ttl === 0) {
+            leftEye.scatteredTears.splice(index, 1);
+        }
+    })
+
+    rightEye.scatteredTears.forEach((scatteredTear, index) => {
+        scatteredTear.update();
+        if(scatteredTear.ttl === 0) {
+            rightEye.scatteredTears.splice(index, 1);
+        }
+    })
 }
 
 window.onload = () => {
