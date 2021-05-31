@@ -397,14 +397,22 @@ function animate() {
     eyes.drawLowerLid(leftEye);
     eyes.drawLowerLid(rightEye);
 
-    leftEye.tearDrops.forEach((tearDrop, index) => {
+    leftEye.tearDrops.forEach((tearDrop) => {
         tearDrop.update();
     });
 
-    rightEye.tearDrops.forEach((tearDrop, index) => {
-        tearDrop.update();
+    if(leftEye.count % 2 === 0) {
+        generateTears(leftEye);
+    }
+    
+    rightEye.tearDrops.forEach((tearDrop) => {
+            tearDrop.update();
     });
 
+    if(rightEye.count % 2 === 0){
+        generateTears(rightEye);
+    }
+    
     eyes.drawWhite(leftEye);
     eyes.drawWhite(rightEye);
 
@@ -416,8 +424,6 @@ function animate() {
     eyes.update();
 
     timer++;
-    generateTears(leftEye);
-    generateTears(rightEye);
 
     leftEye.scatteredTears.forEach((scatteredTear, index) => {
         scatteredTear.update();
