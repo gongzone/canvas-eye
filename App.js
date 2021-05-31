@@ -14,6 +14,7 @@ addEventListener('resize', () => {
     eyes.onClick(leftEye);
     eyes.onClick(rightEye);
     eyes.onMouseOver(leftEye);
+    eyes.onMouseOver(rightEye);
 });
 
 class EyeStructure {
@@ -44,6 +45,14 @@ class EyeStructure {
         this.tearDrops = [];
         this.scatteredTears = [];
         this.blinkPoint = this.quadTopY;
+
+        this.pupilRadius = 45;
+        this.fixedRadius = 45;
+        this.radian = Math.PI;
+        this.velocity2  = 0.15;
+        this.speed = 0.1;
+        this.max = 6; 
+        this.gg = 0;
     }
     getMousePos(event) {
         this.mouseX = event.clientX - this.leftX;
@@ -58,12 +67,7 @@ class EyeStructure {
 
 class Eyes {
     constructor() {
-        this.pupilRadius = 45;
-        this.fixedRadius = 45;
-        this.radian = Math.PI;
-        this.velocity  = 0.15;
-        this.speed = 0.1;
-        this.max = 6; 
+    
     }
     drawUpperLid(eye) {
         const gradient = ctx.createLinearGradient(eye.quadX, eye.cubicTopY + 10, eye.quadX, eye.cubicTopY + 110);
@@ -100,7 +104,7 @@ class Eyes {
     }
     drawPupil(eye) {
         ctx.beginPath();
-        ctx.arc(eye.quadX, eye.y, this.pupilRadius , 0, 2 * Math.PI);
+        ctx.arc(eye.quadX, eye.y, eye.pupilRadius , 0, 2 * Math.PI);
         ctx.fillStyle = '#77C66E';
         ctx.fill();
         ctx.lineWidth = 1.5;
@@ -109,13 +113,13 @@ class Eyes {
         ctx.closePath();
     
         ctx.beginPath();
-        ctx.arc(eye.quadX, eye.y, this.pupilRadius - 20, 0, 2 * Math.PI);
+        ctx.arc(eye.quadX, eye.y, eye.pupilRadius - 20, 0, 2 * Math.PI);
         ctx.fillStyle = 'black';
         ctx.fill();
         ctx.closePath();
     
         ctx.beginPath();
-        ctx.arc(eye.quadX + 10, eye.y - 7, this.pupilRadius - 36, 0, 2 * Math.PI);
+        ctx.arc(eye.quadX + 10, eye.y - 7, eye.pupilRadius - 36, 0, 2 * Math.PI);
         ctx.fillStyle = 'white';
         ctx.fill();
         ctx.closePath();
@@ -127,6 +131,7 @@ class Eyes {
 
         this.drawUpperLid(rightEye);
         this.blink(rightEye);
+        this.fd(rightEye);
 
         
     }
@@ -140,26 +145,30 @@ class Eyes {
             eye.blinkPoint -= eye.velocity;
             eye.velocity += acceleration;
         }
-
     }
     fd (eye) {
         if((0 <= eye.mouseX && eye.mouseX <= 225) && (eye.yTop <= eye.mouseY && eye.mouseY <= eye.yBottom)) {
-            this.changePupilSize();
-            } else {
-                this.pupilRadius = this.fixedRadius;
+            eye.gg = 1;
+            eye.radian += eye.velocity2;
+            eye.pupilRadius = eye.fixedRadius + (Math.sin(eye.radian) * eye.max);
+    
+            eye.max -= eye.speed;
+            eye.max = eye.max < 0 ? 0 : eye.max;
+
+            if(eye.max <= 0 || eye.max >= 6) {
+                eye.speed *= -1;
+            }
+            } else if(((0 > eye.mouseX || eye.mouseX > 225) || (eye.yTop > eye.mouseY || eye.mouseY > eye.yBottom)) && eye.max !== 6) {
+                eye.gg = 0;
+            
+                if((eye.max >= 0) && (eye.gg === 0)) {
+                    eye.radian += eye.velocity2;
+                    eye.pupilRadius = eye.fixedRadius + (Math.sin(eye.radian) * eye.max);
+
+                    eye.max -= 0.05;
+                }
             } 
     }
-    
-    changePupilSize() {
-        this.radian += this.velocity;
-        this.pupilRadius = this.fixedRadius + (Math.sin(this.radian) * this.max);
-
-        this.max -= this.speed;
-        
-        if(this.max <= 0 || this.max >= 6) {
-            this.speed = this.speed * -1;
-        }
-}
     onMouseOver(eye) {
         canvas.addEventListener('mousemove', (event) => {
             eye.getMousePos(event);
@@ -430,6 +439,8 @@ window.onload = () => {
     init();
     eyes.onClick(leftEye);
     eyes.onClick(rightEye);
-    animate();
     eyes.onMouseOver(leftEye);
+    eyes.onMouseOver(rightEye);
+    animate();
+   
 }
