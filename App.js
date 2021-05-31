@@ -127,11 +127,11 @@ class Eyes {
     update() {
         this.drawUpperLid(leftEye);
         this.blink(leftEye);
-        this.fd(leftEye);
+        this.changeEyeBallSize(leftEye);
 
         this.drawUpperLid(rightEye);
         this.blink(rightEye);
-        this.fd(rightEye);
+        this.changeEyeBallSize(rightEye);
 
         
     }
@@ -146,7 +146,7 @@ class Eyes {
             eye.velocity += acceleration;
         }
     }
-    fd (eye) {
+    changeEyeBallSize(eye) {
         if((0 <= eye.mouseX && eye.mouseX <= 225) && (eye.yTop <= eye.mouseY && eye.mouseY <= eye.yBottom)) {
             eye.gg = 1;
             eye.radian += eye.velocity2;
@@ -177,9 +177,7 @@ class Eyes {
     
     }
     onClick(eye) {
-        canvas.addEventListener('click', (event) => { 
-            eye.getMousePos(event);
-            eye.getYrange();
+        canvas.addEventListener('click', () => { 
             
             if((0 <= eye.mouseX && eye.mouseX <= 225) && (eye.yTop <= eye.mouseY && eye.mouseY <= eye.yBottom)) {
                 eye.count++;
@@ -348,10 +346,41 @@ class TearWave {
     }
 }
 
+class HoverShining {
+    constructor() {
+        this.alpha = 0.01;
+        this.speed = 0.02;
+    }
+    draw(eye) {
+        ctx.beginPath();
+        ctx.save();
+        ctx.moveTo(eye.leftX, eye.y);
+        ctx.bezierCurveTo(eye.cubicLeftX, eye.cubicTopY, eye.cubicRightX, eye.cubicTopY, eye.rightX, eye.y);
+        ctx.bezierCurveTo(eye.cubicRightX, eye.cubicBotY, eye.cubicLeftX, eye.cubicBotY, eye.leftX, eye.y);
+        ctx.shadowColor = `rgba(242, 233, 197, ${this.alpha})`
+        ctx.shadowBlur = 15;
+        ctx.fill();
+        ctx.restore();
+        ctx.closePath();
+    }
+    generateShining (eye) {
+        if((0 <= eye.mouseX && eye.mouseX <= 225) && (eye.yTop <= eye.mouseY && eye.mouseY <= eye.yBottom)) {
+            this.draw(eye);
+
+            this.alpha += this.speed ;
+
+            if(this.alpha <= 0 || this.alpha >= 1 ) {
+                this.speed *= -1;
+            }
+            } 
+    }
+}
+
 let leftEye;
 let rightEye;
 let eyes = new Eyes();
 let tearWave = new TearWave();
+let hoverShining = new HoverShining();
 let timer = 0;
 
 function init() {
@@ -391,11 +420,14 @@ function getRandomInt(min, max) {
 
 function animate() {
     requestAnimationFrame(animate);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; 
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     eyes.drawLowerLid(leftEye);
     eyes.drawLowerLid(rightEye);
+
+    hoverShining.generateShining(leftEye);
+    hoverShining.generateShining(rightEye);
 
     leftEye.tearDrops.forEach((tearDrop) => {
         tearDrop.update();
