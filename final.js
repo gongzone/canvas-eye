@@ -20,10 +20,11 @@ addEventListener('resize', () => {
 class EyeStructure {
     constructor(canvasWidth, canvasHeight, isRightEye) {
         const widthCenter = canvasWidth / 2;
+        const yRatio = 0.35;
 
         this.leftX = widthCenter - 240;
         this.rightX = this.leftX + 225;
-        this.y = canvasHeight * 0.35;
+        this.y = canvasHeight * yRatio;
 
         if(isRightEye) {
             this.leftX = widthCenter + 15;
@@ -51,7 +52,7 @@ class EyeStructure {
         this.radian = Math.PI;
         this.velocity2  = 0.15;
         this.speed = 0.1;
-        this.max = 5; 
+        this.max = 6; 
         this.gg = 0;
     }
     getMousePos(event) {
@@ -62,6 +63,9 @@ class EyeStructure {
         this.t = this.mouseX / 225;
         this.yTop = (1-this.t)**3 * this.y + 3 * (1-this.t)**2 * this.t * this.cubicTopY + 3*(1-this.t) * this.t**2 * this.cubicTopY + this.t**3 * this.y;
         this.yBottom = (1-this.t)**3 * this.y + 3 * (1-this.t)**2 * this.t * this.cubicBotY + 3*(1-this.t) * this.t**2 * this.cubicBotY + this.t**3 * this.y;
+    }
+    function1() {
+        const a = 
     }
 }
 
@@ -155,10 +159,10 @@ class Eyes {
             eye.max -= eye.speed;
             eye.max = eye.max < 0 ? 0 : eye.max;
 
-            if(eye.max <= 0 || eye.max >= 5) {
+            if(eye.max <= 0 || eye.max >= 6) {
                 eye.speed *= -1;
             }
-            } else if(((0 > eye.mouseX || eye.mouseX > 225) || (eye.yTop > eye.mouseY || eye.mouseY > eye.yBottom)) && eye.max !== 5) {
+            } else if(((0 > eye.mouseX || eye.mouseX > 225) || (eye.yTop > eye.mouseY || eye.mouseY > eye.yBottom)) && eye.max !== 6) {
                 eye.gg = 0;
             
                 if((eye.max >= 0) && (eye.gg === 0)) {
@@ -219,7 +223,7 @@ class TearDrop {
     
         this.gravity = 0.15;
         this.ttl = 500;
-        this.randomRadius = getRandom(2, 5);
+        this.randomRadius = getRandomInt(2, 5);
     }
     draw() {
         ctx.beginPath();
@@ -244,14 +248,13 @@ class TearDrop {
     }
     scatter(eye) {
         if(this.y + this.radius >= canvas.height) {
+            for(let i = 0; i < 10; i++) {
+            eye.scatteredTears.push(new ScatteredTears(this.x, this.y, (this.radius - 1) * Math.random()));
+            }
             eye.tearDrops.forEach((tearDrop, index) => {
                 if(tearDrop.y + this.radius >= canvas.height){
                 eye.tearDrops.splice(index, 1);
             }})
-            
-            for(let i = 0; i < 10; i++) {
-            eye.scatteredTears.push(new ScatteredTears(this.x, this.y,  (this.radius*4) * Math.random()));
-            }
         }
 }
 }
@@ -260,13 +263,13 @@ class ScatteredTears extends TearDrop {
     constructor(x, y, radius) {
         super(x, y, radius);
         this.velocity = {
-            x: getRandom(-4, 4),
-            y: getRandom(-5, 5),
+            x: getRandomInt(-4, 4),
+            y: getRandomInt(-5, 5),
         }
 
         this.gravity = 0.08;
         this.randomRadius = Math.random() * this.radius;
-        this.ttl = 200;
+        this.ttl = 100;
         this.r = 167;
         this.g = 208;
         this.b = 240;
@@ -274,18 +277,18 @@ class ScatteredTears extends TearDrop {
     }
     draw() {
         ctx.beginPath();
-        ctx.fillStyle = `rgba(${this.r}, ${this.g}, ${this.b}, ${this.alpha})`;
+        ctx.fillStyle = `rgb(${this.r}, ${this.g}, ${this.b}, ${this.alpha} )`;
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
         ctx.closePath();
-        }
+    }
     update() {
-        this.ttl -= 1;
         this.draw();
-        
+
         this.x += this.velocity.x;
         this.y += this.velocity.y;
         this.velocity.y += this.gravity;
+        this.ttl -= 1;
         this.r += getRandomInt(-15, 15);
         this.g += getRandomInt(-15, 15);
         this.b += getRandomInt(-15, 15);
@@ -415,18 +418,13 @@ function generateTears(eye) {
     }
 }
 
-function getRandom(min, max) {
-    return Math.random() * (max - min + 1) + min;
-}
-
 function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
-
 function animate() {
     requestAnimationFrame(animate);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     eyes.drawLowerLid(leftEye);
