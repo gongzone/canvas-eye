@@ -1,8 +1,6 @@
 
 export class EyeBall {
     constructor(x, y, x2, y2 , ctx) {
-        
-        
         this.ctx = ctx;
 
         this.x = x;
