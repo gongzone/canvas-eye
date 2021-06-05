@@ -11,14 +11,15 @@ addEventListener('resize', () => {
     canvas.height = document.body.clientHeight;
     
     init();
+    eyes.getMousePos(leftEye);
+    eyes.getMousePos(rightEye);
     eyes.onClick(leftEye);
     eyes.onClick(rightEye);
-    eyes.onMouseOver(leftEye);
-    eyes.onMouseOver(rightEye);
 });
 
 class EyeStructure {
     constructor(canvasWidth, canvasHeight, isRightEye) {
+        //Coordinates for Structure
         const widthCenter = canvasWidth / 2;
         const yRatio = 0.35;
 
@@ -40,32 +41,40 @@ class EyeStructure {
         this.cubicTopY = this.y - 90;
         this.cubicBotY = this.y + 90;
 
-        this.count = 0;
-        this.velocity = 0.03;
+        //for Blinking
+        this.blinkPoint = this.quadTopY;
+        this.clickCount = 0;
+        this.currentTime = 0;
+        this.dt = 0;
+        this.blink_Velocity = 0;
+        
+        //for Changing BallSize
+        this.onOff = "off";
+        this.radius = 45;
+        this.fixedRadius = 45;
+        this.radian = 0;
+        this.radian_Velocity = 0.15;
+        this.max_Velocity = 0.1;
+        this.max = 5; 
+        
+        //arrays for push
         this.wavePoints = [];
         this.tearDrops = [];
         this.scatteredTears = [];
-        this.blinkPoint = this.quadTopY;
-
-        this.pupilRadius = 45;
-        this.fixedRadius = 45;
-        this.radian = Math.PI;
-        this.velocity2  = 0.15;
-        this.speed = 0.1;
-        this.max = 6; 
-        this.gg = 0;
     }
-    getMousePos(event) {
+    setMousePos(event) {
         this.mouseX = event.clientX - this.leftX;
         this.mouseY = event.clientY;
     }
-    getYrange() {
-        this.t = this.mouseX / 225;
-        this.yTop = (1-this.t)**3 * this.y + 3 * (1-this.t)**2 * this.t * this.cubicTopY + 3*(1-this.t) * this.t**2 * this.cubicTopY + this.t**3 * this.y;
-        this.yBottom = (1-this.t)**3 * this.y + 3 * (1-this.t)**2 * this.t * this.cubicBotY + 3*(1-this.t) * this.t**2 * this.cubicBotY + this.t**3 * this.y;
+    setYrange() {
+        this.yTop = this.getYrange(this.y, this.cubicTopY, this.cubicTopY, this.y);
+        this.yBottom = this.getYrange(this.y, this.cubicBotY, this.cubicBotY, this.y);
     }
-    function1() {
-        const a = 
+    getYrange(pA, pB, pC, pD) {
+        const t = this.mouseX / 225;
+        const s = (1 - t);
+
+        return s**3 * pA + 3 * (s**2 * t) * pB + 3 * (s * t**2) * pC + t**3 * pD;
     }
 }
 
@@ -106,9 +115,9 @@ class Eyes {
         ctx.fill();
         ctx.closePath();
     }
-    drawPupil(eye) {
+    drawIris_Pupil(eye) {
         ctx.beginPath();
-        ctx.arc(eye.quadX, eye.y, eye.pupilRadius , 0, 2 * Math.PI);
+        ctx.arc(eye.quadX, eye.y, eye.radius, 0, 2 * Math.PI);
         ctx.fillStyle = '#77C66E';
         ctx.fill();
         ctx.lineWidth = 1.5;
@@ -117,13 +126,13 @@ class Eyes {
         ctx.closePath();
     
         ctx.beginPath();
-        ctx.arc(eye.quadX, eye.y, eye.pupilRadius - 20, 0, 2 * Math.PI);
+        ctx.arc(eye.quadX, eye.y, eye.radius - 20, 0, 2 * Math.PI);
         ctx.fillStyle = 'black';
         ctx.fill();
         ctx.closePath();
     
         ctx.beginPath();
-        ctx.arc(eye.quadX + 10, eye.y - 7, eye.pupilRadius - 36, 0, 2 * Math.PI);
+        ctx.arc(eye.quadX + 10, eye.y - 7, eye.radius - 36, 0, 2 * Math.PI);
         ctx.fillStyle = 'white';
         ctx.fill();
         ctx.closePath();
@@ -136,187 +145,97 @@ class Eyes {
         this.drawUpperLid(rightEye);
         this.blink(rightEye);
         this.changeEyeBallSize(rightEye);
-
-        
     }
     blink(eye) {
-        const acceleration = 0.05;
+        const acceleration = 200;
+        
+        if ((eye.blinkPoint < eye.quadBotY) && (eye.clickCount % 2 === 1)) {
+            eye.dt = (new Date().getTime() - eye.currentTime ) / 1000;
+            eye.currentTime = new Date().getTime(); 
+            
+            eye.blink_Velocity += acceleration * eye.dt;
+            eye.blinkPoint += eye.blink_Velocity * eye.dt;
+        } else if ((eye.blinkPoint > eye.quadTopY + 4) && (eye.clickCount % 2 === 0)) {
+            eye.dt = (new Date().getTime() - eye.currentTime) / 1000;
+            eye.currentTime = new Date().getTime(); 
 
-        if ((eye.blinkPoint < eye.quadBotY - 3) && (eye.count % 2 === 1)) {
-            eye.blinkPoint += eye.velocity;
-            eye.velocity += acceleration; 
-        } else if ((eye.blinkPoint > eye.quadTopY + 4) && (eye.count % 2 === 0)) {
-            eye.blinkPoint -= eye.velocity;
-            eye.velocity += acceleration;
+            eye.blink_Velocity += acceleration * eye.dt;
+            eye.blinkPoint -= eye.blink_Velocity * eye.dt;
         }
     }
     changeEyeBallSize(eye) {
         if((0 <= eye.mouseX && eye.mouseX <= 225) && (eye.yTop <= eye.mouseY && eye.mouseY <= eye.yBottom)) {
-            eye.gg = 1;
-            eye.radian += eye.velocity2;
-            eye.pupilRadius = eye.fixedRadius + (Math.sin(eye.radian) * eye.max);
-    
-            eye.max -= eye.speed;
+            eye.onOff = "on";
             eye.max = eye.max < 0 ? 0 : eye.max;
 
-            if(eye.max <= 0 || eye.max >= 6) {
-                eye.speed *= -1;
+            eye.radian += eye.radian_Velocity;
+            eye.radius = eye.fixedRadius + (Math.sin(eye.radian) * eye.max);
+    
+            eye.max -= eye.max_Velocity;
+
+            if(eye.max <= 0 || eye.max >= 5) {
+                eye.max_Velocity *= -1;
             }
-            } else if(((0 > eye.mouseX || eye.mouseX > 225) || (eye.yTop > eye.mouseY || eye.mouseY > eye.yBottom)) && eye.max !== 6) {
-                eye.gg = 0;
+            } else if(eye.max !== 5) {
+                eye.onOff = "off";
             
-                if((eye.max >= 0) && (eye.gg === 0)) {
-                    eye.radian += eye.velocity2;
-                    eye.pupilRadius = eye.fixedRadius + (Math.sin(eye.radian) * eye.max);
+                if((eye.max >= 0) && (eye.onOff = "off")) {
+                    eye.radian += eye.radian_Velocity;
+                    eye.radius = eye.fixedRadius + (Math.sin(eye.radian) * eye.max);
 
                     eye.max -= 0.05;
                 }
             } 
     }
-    onMouseOver(eye) {
+    getMousePos(eye) {
         canvas.addEventListener('mousemove', (event) => {
-            eye.getMousePos(event);
-            eye.getYrange();
+            eye.setMousePos(event);
+            eye.setYrange();
         })
-    
     }
     onClick(eye) {
         canvas.addEventListener('click', () => { 
             
             if((0 <= eye.mouseX && eye.mouseX <= 225) && (eye.yTop <= eye.mouseY && eye.mouseY <= eye.yBottom)) {
-                eye.count++;
-                eye.velocity = 0.03;
-                console.log(eye.count);
-                console.log(eye.velocity);
-                console.log(eye.mouseX);
-                console.log(eye.mouseY);
-                console.log(eye.yTop);
-                console.log(eye.yBottom);
+                eye.clickCount++;
+                eye.blink_Velocity = 0.00;
+                eye.currentTime = new Date().getTime();
             }
-            
         })
     }
 }
 
 class WavePoint {
-    constructor(x, y, radian, velocity) {
+    constructor(x, y, radian) {
         this.x = x;
         this.y = y;
         this.fixedY = y;
         this.radian = radian;
-        this.velocity  = velocity;
-        this.yRange = Math.random() * 8; 
+        this.radian_Velocity = 0.03;
+        this.max = Math.random() * 8; 
     }
     update() {
-        this.radian += this.velocity;
-        this.y = this.fixedY + (Math.sin(this.radian) * this.yRange);
+        this.y = this.fixedY + (Math.sin(this.radian) * this.max);
+        this.radian += this.radian_Velocity;
     }
-}
-
-class TearDrop {
-    constructor(x, y, radius, color, velocity) {
-        this.x = x;
-        this.y = y;
-        this.radius = radius;
-        this.color = color;
-        this.velocity = velocity;
-    
-        this.gravity = 0.15;
-        this.ttl = 500;
-        this.randomRadius = getRandomInt(2, 5);
-    }
-    draw() {
-        ctx.beginPath();
-        ctx.fillStyle = this.color;
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.closePath();
-    }
-    update() {
-        this.draw();
-    
-        if(this.radius <= this.randomRadius) {
-            this.radius += 0.02;
-        } else if(this.radius >= this.randomRadius) {
-            this.y += this.velocity.y;
-            this.velocity.y += this.gravity;
-        }
-
-        this.scatter(leftEye);
-        this.scatter(rightEye);
-
-    }
-    scatter(eye) {
-        if(this.y + this.radius >= canvas.height) {
-            for(let i = 0; i < 10; i++) {
-            eye.scatteredTears.push(new ScatteredTears(this.x, this.y, (this.radius - 1) * Math.random()));
-            }
-            eye.tearDrops.forEach((tearDrop, index) => {
-                if(tearDrop.y + this.radius >= canvas.height){
-                eye.tearDrops.splice(index, 1);
-            }})
-        }
-}
-}
-
-class ScatteredTears extends TearDrop {
-    constructor(x, y, radius) {
-        super(x, y, radius);
-        this.velocity = {
-            x: getRandomInt(-4, 4),
-            y: getRandomInt(-5, 5),
-        }
-
-        this.gravity = 0.08;
-        this.randomRadius = Math.random() * this.radius;
-        this.ttl = 100;
-        this.r = 167;
-        this.g = 208;
-        this.b = 240;
-        this.alpha = 1;
-    }
-    draw() {
-        ctx.beginPath();
-        ctx.fillStyle = `rgb(${this.r}, ${this.g}, ${this.b}, ${this.alpha} )`;
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.closePath();
-    }
-    update() {
-        this.draw();
-
-        this.x += this.velocity.x;
-        this.y += this.velocity.y;
-        this.velocity.y += this.gravity;
-        this.ttl -= 1;
-        this.r += getRandomInt(-15, 15);
-        this.g += getRandomInt(-15, 15);
-        this.b += getRandomInt(-15, 15);
-        this.alpha -= 1 / this.ttl;
-    }
-
 }
 
 class TearWave {
     constructor() {
         this.totalPoints = 10;
-        this.velocity = 0.03;
-
-        this.timer = 0;
     }
     init(eye) {
-        const vertex = eye.quadBotY - 50;
+        const vertex = this.totalPoints % 2 === 0 ? eye.quadBotY - 50 : eye.quadBotY - 55;
         const xGap = (eye.rightX - eye.leftX) / (this.totalPoints - 1);
         const yGap = (vertex - eye.y ) / Math.floor(this.totalPoints / 2);
     
         for (let i = 0; i < this.totalPoints; i++) {
             const x = xGap * i + eye.leftX;
             const y = i < this.totalPoints / 2 ? eye.y + (i * yGap) : vertex - ((i - Math.floor((this.totalPoints - 1) / 2)) * yGap);
-            eye.wavePoints.push(new WavePoint(x, y, i, this.velocity))
+            eye.wavePoints.push(new WavePoint(x, y, Math.PI / 2 * i))
         }
     }
     draw(eye) {
-        
         ctx.beginPath();
         ctx.fillStyle = '#a7d0f0';
 
@@ -344,16 +263,94 @@ class TearWave {
         ctx.fill();
         ctx.closePath();
     }
-    update() {
-        this.draw(leftEye);
-        this.draw(rightEye);
+}
+
+class TearDrop {
+    constructor(x, y, radius, color, velocity) {
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.color = color;
+        this.velocity = velocity;
+
+        this.gravity = 0.15;
+        this.randomRadius = getRandomNum(2, 5);
     }
+    draw() {
+        ctx.beginPath();
+        ctx.fillStyle = this.color;
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.closePath();
+    }
+    update() {
+        this.draw();
+    
+        if(this.radius <= this.randomRadius) {
+            this.radius += 0.02;
+        } else if(this.radius >= this.randomRadius) {
+            this.y += this.velocity.y;
+            this.velocity.y += this.gravity;
+        }
+
+        this.scatter(leftEye);
+        this.scatter(rightEye);
+    }
+    scatter(eye)  {
+        if(this.y + this.radius >= canvas.height) {
+            eye.tearDrops.forEach((tearDrop, index) => {
+                if(tearDrop.y + tearDrop.radius >= canvas.height){
+                eye.tearDrops.splice(index, 1);
+            }})
+            
+            for(let i = 0; i < 10; i++) {
+            eye.scatteredTears.push(new ScatteredTears(this.x, this.y,  (this.radius*4) * Math.random()));
+            }
+        }
+}
+}
+
+class ScatteredTears extends TearDrop {
+    constructor(x, y, radius) {
+        super(x, y, radius);
+        this.velocity = {
+            x: getRandomNum(-4, 4),
+            y: getRandomNum(-5, 5),
+        }
+
+        this.gravity = 0.08;
+        this.ttl = 200;
+        this.r = 167;
+        this.g = 208;
+        this.b = 240;
+        this.alpha = 1;
+    }
+    draw() {
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(${this.r}, ${this.g}, ${this.b}, ${this.alpha} )`;
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.closePath();
+    }
+    update() {
+        this.ttl -= 1;
+        this.draw();
+
+        this.x += this.velocity.x;
+        this.y += this.velocity.y;
+        this.velocity.y += this.gravity;
+        this.r += getRandomInt(-15, 15);
+        this.g += getRandomInt(-15, 15);
+        this.b += getRandomInt(-15, 15);
+        this.alpha -= 1 / this.ttl;
+    }
+
 }
 
 class HoverShining {
     constructor() {
         this.alpha = 0.01;
-        this.speed = 0.02;
+        this.alpha_Velocity = 0.02;
     }
     draw(eye) {
         ctx.beginPath();
@@ -371,12 +368,12 @@ class HoverShining {
         if((0 <= eye.mouseX && eye.mouseX <= 225) && (eye.yTop <= eye.mouseY && eye.mouseY <= eye.yBottom)) {
             this.draw(eye);
 
-            this.alpha += this.speed ;
+            this.alpha += this.alpha_Velocity ;
 
             if(this.alpha <= 0 || this.alpha >= 1 ) {
-                this.speed *= -1;
+                this.alpha_Velocity *= -1;
             }
-            } 
+        } 
     }
 }
 
@@ -418,13 +415,17 @@ function generateTears(eye) {
     }
 }
 
+function getRandomNum(min, max) {
+    return Math.random() * (max - min + 1) + min;
+}
+
 function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
 function animate() {
     requestAnimationFrame(animate);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     eyes.drawLowerLid(leftEye);
@@ -437,7 +438,7 @@ function animate() {
         tearDrop.update();
     });
 
-    if(leftEye.count % 2 === 0) {
+    if(leftEye.clickCount % 2 === 0) {
         generateTears(leftEye);
     }
     
@@ -445,17 +446,18 @@ function animate() {
             tearDrop.update();
     });
 
-    if(rightEye.count % 2 === 0){
+    if(rightEye.clickCount % 2 === 0){
         generateTears(rightEye);
     }
     
     eyes.drawWhite(leftEye);
     eyes.drawWhite(rightEye);
 
-    eyes.drawPupil(leftEye);
-    eyes.drawPupil(rightEye);
+    eyes.drawIris_Pupil(leftEye);
+    eyes.drawIris_Pupil(rightEye);
 
-    tearWave.update();
+    tearWave.draw(leftEye);
+    tearWave.draw(rightEye);
 
     eyes.update();
 
@@ -479,10 +481,9 @@ function animate() {
 
 window.onload = () => {
     init();
+    eyes.getMousePos(leftEye);
+    eyes.getMousePos(rightEye);
     eyes.onClick(leftEye);
     eyes.onClick(rightEye);
-    eyes.onMouseOver(leftEye);
-    eyes.onMouseOver(rightEye);
     animate();
-   
 }
