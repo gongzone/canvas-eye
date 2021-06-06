@@ -11,12 +11,12 @@ Creating Interactive Eyes with HTML5 Canvas and Vanilla Javascript
     -Making each wavepoints oscillate by using sine function, And connecting center dots of wavepoints in a curved form
     
  * __TearDrop__<br>
-   -Generating tears that fall down at a given time. when they hit the floor(bottom of window), Random-colored particles pop up
+   -Generating tears that fall down at a given time. when they hit the floor(bottom of window), Random-colored particles pop up and disappear
    
  ## 2. Interactive Animation
   * __Click on eyes__<br>
      -When clicking the eye, it will be closed or open depending on the current state. And if the eye is shutting down or fully closed,  
-      &nbsp; Stop the teardrop animation. In the opposite case, Get the animation back on. 
+      Stop the teardrop animation. In the opposite case, Get the animation back on. 
  
   * __Mouse over eyes__<br>
     -When mouse pointer over the eye, activate hover effects as shown below:<br><br>
