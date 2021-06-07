@@ -152,12 +152,20 @@ class Eyes {
         if ((eye.blinkPoint < eye.quadBotY) && (eye.clickCount % 2 === 1)) {
             eye.dt = (new Date().getTime() - eye.currentTime ) / 1000;
             eye.currentTime = new Date().getTime(); 
+
+            if (eye.dt > 0.2) {
+                dt = 0;
+            };
             
             eye.blink_Velocity += acceleration * eye.dt;
             eye.blinkPoint += eye.blink_Velocity * eye.dt;
         } else if ((eye.blinkPoint > eye.quadTopY + 4) && (eye.clickCount % 2 === 0)) {
             eye.dt = (new Date().getTime() - eye.currentTime) / 1000;
             eye.currentTime = new Date().getTime(); 
+
+            if (eye.dt > 0.2) {
+                dt = 0;
+            };
 
             eye.blink_Velocity += acceleration * eye.dt;
             eye.blinkPoint -= eye.blink_Velocity * eye.dt;
