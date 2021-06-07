@@ -153,7 +153,7 @@ class Eyes {
             eye.dt = (new Date().getTime() - eye.currentTime ) / 1000;
             eye.currentTime = new Date().getTime(); 
 
-            if (eye.dt > 0.2) {
+            if (eye.dt > 0.2) { //fix the bug when switching browser tab
                 dt = 0;
             };
             
@@ -163,7 +163,7 @@ class Eyes {
             eye.dt = (new Date().getTime() - eye.currentTime) / 1000;
             eye.currentTime = new Date().getTime(); 
 
-            if (eye.dt > 0.2) {
+            if (eye.dt > 0.2) { //fix the bug when switching browser tab
                 dt = 0;
             };
 
